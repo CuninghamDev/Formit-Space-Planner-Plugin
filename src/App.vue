@@ -1,15 +1,13 @@
 <template>
   <v-app>
-    <v-app-bar app color="grey darken-2" dark>
-      <div class="d-flex align-center">
-        <h2 class="roboto-mono">Space Planner Plugin</h2>
+    <v-app-bar app color="grey darken-2" dark dense>
+      <div class="d-flex align-center my-0 py-0">
+        <h2 class="roboto-mono my-0 py-0">Planning Blocks</h2>
       </div>
 
-      <v-spacer></v-spacer>
-
       <template v-slot:extension>
-        <v-tabs v-model="selectedTab">
-          <v-tab v-for="(tab, i) in tabs" :key="i">{{ tab }}</v-tab>
+        <v-tabs v-model="selectedTab" show-arrows>
+          <v-tab v-for="(tab, i) in tabs" :key="i"> {{ tab }}</v-tab>
         </v-tabs>
       </template>
     </v-app-bar>

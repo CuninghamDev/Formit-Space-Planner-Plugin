@@ -6,10 +6,24 @@ let store = {
   strict: true,
   state: {
     testData: "Test",
+    referencedFile: undefined,
   },
   mutations: {
     changeTestData(state, n) {
       state.testData = n;
+    },
+    openFile(state, n) {
+      state.referencedFile = n;
+    },
+    setActiveBuildingId(state, n) {
+      if (state.referenceFile) {
+        state.referenceFile.activeBuildingId = n;
+      }
+    },
+    setActivePhaseId(state, n) {
+      if (state.referenceFile) {
+        state.referenceFile.activePhaseId = n;
+      }
     },
   },
   getters: {
