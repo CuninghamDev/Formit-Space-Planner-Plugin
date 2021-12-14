@@ -1,0 +1,7 @@
+{
+    "PluginName": "Hello Vue - Simplified",
+    "PluginDescription": "Testing Vue in FormIt plugin development",
+    "PluginType": "Panel",
+    "Panel": "PLUGINLOCATION/dist/plugin.html",
+    "PanelIcon": "PLUGINLOCATION/src/assets/plugin.png"
+}
