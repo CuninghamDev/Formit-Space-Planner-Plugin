@@ -23,6 +23,12 @@
 
       <v-row>
         <v-col>
+          <h1 class="roboto-mono">{{ projectName }}</h1>
+        </v-col>
+      </v-row>
+      <hr class="mb-6" />
+      <v-row>
+        <v-col>
           <h3>Select Building and Phase as Basis for Planning Blocks</h3>
         </v-col>
       </v-row>
@@ -103,6 +109,13 @@ export default {
     activePhaseId() {
       if (this.referencedFile) {
         return this.referencedFile.activePhaseId;
+      } else {
+        return undefined;
+      }
+    },
+    projectName() {
+      if (this.referencedFile) {
+        return this.referencedFile.projectName;
       } else {
         return undefined;
       }
