@@ -1,6 +1,6 @@
 {
-    "PluginName": "Hello Vue - Simplified",
-    "PluginDescription": "Testing Vue in FormIt plugin development",
+    "PluginName": "Space Planner Interoperability",
+    "PluginDescription": "A plugin for loading and visualizing programming data from the space planning tool, using this data to create groups / geometry in FormIt, then validating this geometry against the original program.",
     "PluginType": "Panel",
     "Panel": "PLUGINLOCATION/dist/plugin.html",
     "PanelIcon": "PLUGINLOCATION/src/assets/plugin.png"

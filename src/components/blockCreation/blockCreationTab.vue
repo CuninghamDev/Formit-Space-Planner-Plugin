@@ -160,8 +160,8 @@ export default {
         );
         console.log("name", name, "material", m);
         if (name.Result == true) {
-          let material = { name, id: m };
-          materialData[name] = material;
+          let material = { name: name.Name, id: m };
+          materialData[name.Name] = material;
         }
       }
       // console.log(materialIds);
