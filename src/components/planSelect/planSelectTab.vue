@@ -7,7 +7,14 @@
     >
     <v-row
       ><v-col>
-        <v-btn dark v-blur @click="openFile()" class="mb-3" color="#988600"
+        <v-btn
+          large
+          rounded
+          dark
+          v-blur
+          @click="openFile()"
+          class="mb-3"
+          color="#988600"
           >Open JSON File</v-btn
         >
       </v-col></v-row
@@ -89,13 +96,13 @@ export default {
     }
   },
   beforeDestroy() {
-    let inputElement = document.getElementById("file-input");
-    inputElement.removeEventListener("change", handleFiles, false);
-    let self = this;
-    function handleFiles() {
-      const fileList = this.files;
-      self.activateOpenedFile(fileList);
-    }
+    // let inputElement = document.getElementById("file-input");
+    // inputElement.removeEventListener("change", handleFiles, false);
+    // let self = this;
+    // function handleFiles() {
+    //   const fileList = this.files;
+    //   self.activateOpenedFile(fileList);
+    // }
   },
   computed: {
     ...mapState(["referencedFile"]),

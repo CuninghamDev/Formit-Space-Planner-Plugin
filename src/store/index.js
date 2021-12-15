@@ -60,6 +60,13 @@ let store = {
       });
       return unsortedProgramData;
     },
+    getColorKey: (state) => {
+      if (!state.referencedFile) {
+        return undefined;
+      }
+      let ref = state.referencedFile;
+      return ref.colorKey;
+    },
     getColorScale: (state) => {
       if (!state.referencedFile) {
         return undefined;
@@ -96,6 +103,48 @@ let store = {
         .domain(departmentNames)
         .range(departmentColors);
       return color;
+    },
+    getActiveLevelsByElevation: (state) => {
+      if (!state.referencedFile) {
+        return undefined;
+      }
+      let ref = state.referencedFile;
+      let buildingDataKey = "building " + ref.activeBuildingId;
+      let buildingLevels = JSON.parse(
+        JSON.stringify(ref.levelData[buildingDataKey])
+      );
+      let buildingLevelsOut = [];
+      for (let k in buildingLevels) {
+        if (k != "meta") {
+          let l = buildingLevels[k];
+          l.id = k;
+          buildingLevelsOut.push(l);
+        }
+      }
+
+      function compareLevels(a, b) {
+        let elevA = a.elevation;
+        let elevB = b.elevation;
+        let comparison = 0;
+        if (elevA > elevB) {
+          comparison = 1;
+        } else if (elevA < elevB) {
+          comparison = -1;
+        }
+        return comparison;
+      }
+
+      buildingLevelsOut.sort(compareLevels);
+      return buildingLevelsOut;
+    },
+    activeProgram: (state) => {
+      if (!state.referencedFile) {
+        return undefined;
+      }
+      let ref = state.referencedFile;
+      let programDataKey =
+        "phase " + ref.activePhaseId + " | building " + ref.activeBuildingId;
+      return ref.allProgramData[programDataKey];
     },
   },
 };

@@ -1,14 +1,16 @@
 <template>
-  <svg
-    id="d3-bubble-diagram-canvas"
-    class="bubbleDiagram w-100 col ma-0 pa-0 elevation-4"
-    style="height: 500px"
-  ></svg>
+  <div class="pa-6 elevation-4">
+    <svg
+      id="d3-bubble-diagram-canvas"
+      class="bubbleDiagram w-100 col ma-0 pa-0"
+      style="height: 500px"
+    ></svg>
+  </div>
 </template>
 
 <script>
 import * as d3 from "d3";
-import { mapGetters, mapState } from "vuex";
+import { mapGetters } from "vuex";
 export default {
   name: "CirclePackingDiagram",
   mounted() {
@@ -38,7 +40,6 @@ export default {
       return this.activeBuilding.name;
     },
     ...mapGetters(["activeProgramUnsorted", "activeBuilding", "getColorScale"]),
-    ...mapState(["colorKey"]),
   },
   methods: {
     resize() {
@@ -47,19 +48,16 @@ export default {
     },
     drawUpdateDepartmentBubbles: function (data) {
       let color = this.getColorScale;
-      let labelHeight = 0;
+      // let labelHeight = 0;
+      // let offsetVal = 25
       let svgCanvas = d3.select("#d3-bubble-diagram-canvas");
       let width = Number(svgCanvas.style("width").replace("px", ""));
-      let height =
-        Number(svgCanvas.style("height").replace("px", "")) - labelHeight;
+      let height = Number(svgCanvas.style("height").replace("px", ""));
 
       svgCanvas.style("font", "10px sans-serif").attr("text-anchor", "middle");
 
       let pack = (data) =>
-        d3
-          .pack()
-          .size([width - 2, height - 2])
-          .padding(3)(
+        d3.pack().size([width, height]).padding(3)(
           d3
             .hierarchy(data)
             .sum((d) => d.value)
