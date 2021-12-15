@@ -129,8 +129,22 @@ export default {
   methods: {
     createButtonClicked() {
       let self = this;
+      // self.getInSketchMaterials().then((materialData) => {
+      //   self.makeMissingMaterials(self, materialData);
+      // });
+      self
+        .addMaterialsAndGetUpdatedMaterialList(self)
+        .then((updatedMaterialData) => {
+          console.log("updated material data", updatedMaterialData);
+        });
+    },
+    addMaterialsAndGetUpdatedMaterialList: async (self) => {
       self.getInSketchMaterials().then((materialData) => {
-        self.makeMissingMaterials(self, materialData);
+        self.makeMissingMaterials(self, materialData).then(() => {
+          self.getInSketchMaterials().then((updatedMaterialData) => {
+            return updatedMaterialData;
+          });
+        });
       });
     },
     getInSketchMaterials: async () => {
@@ -161,12 +175,17 @@ export default {
         console.log("rgb conversion results", colorRgb, colorName);
         if (colorRgb && !(colorName in materialData)) {
           console.log("running material creation loop", colorKey);
-          let wsmColor = await WSM.Color(colorRgb.r, colorRgb.g, colorRgb.b, 255);
+          let wsmColor = await WSM.Color(
+            colorRgb.r,
+            colorRgb.g,
+            colorRgb.b,
+            255
+          );
           console.log("wsm color", wsmColor);
           let newFormItMaterial = await FormIt.MaterialProvider.MaterialData(
             wsmColor
           );
-          newFormItMaterial.MaterialName = colorName
+          newFormItMaterial.MaterialName = colorName;
           console.log("new formit material", newFormItMaterial);
           await FormIt.MaterialProvider.CreateMaterial(
             FormIt.LibraryType.SKETCH,
