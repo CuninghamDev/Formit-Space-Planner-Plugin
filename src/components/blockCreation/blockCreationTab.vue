@@ -112,40 +112,59 @@ export default {
           typesObj[p.department] = [];
         }
       }
+
       let groupsObj = {};
       for (let p of this.activeProgram) {
         if (!(p.group in groupsObj)) {
           groupsObj[p.group] = JSON.parse(JSON.stringify(typesObj));
         }
       }
-      for (let p of this.activeProgram) {
-        groupsObj[p.group][p.department].push(p);
+
+      let levelObj = {};
+      for (let i in this.getActiveLevelsByElevation) {
+        let lvl = this.getActiveLevelsByElevation[i];
+        levelObj[lvl.id] = {
+          name: lvl.name,
+          id: lvl.id,
+          elevation: lvl.elevation,
+          groups: undefined,
+          nextElev: undefined,
+        };
+        if (i < this.getActiveLevelsByElevation - 1) {
+          levelObj[lvl.id].nextElev = this.getActiveLevelsByElevation[i + 1];
+        } else {
+          levelObj[lvl.id].nextElev = levelObj[lvl.id].elevation + 12;
+        }
+        levelObj[lvl.id].groups = JSON.parse(JSON.stringify(groupsObj));
       }
 
-      return groupsObj;
+      for (let p of this.activeProgram) {
+        levelObj[p.level]["groups"][p.group][p.department].push(p);
+      }
+
+      return levelObj;
     },
   },
   data: () => ({}),
   methods: {
     createButtonClicked() {
-      let self = this;
-      // self.getInSketchMaterials().then((materialData) => {
-      //   self.makeMissingMaterials(self, materialData);
-      // });
-      self
-        .addMaterialsAndGetUpdatedMaterialList(self)
-        .then((updatedMaterialData) => {
-          console.log("updated material data", updatedMaterialData);
-        });
-    },
-    addMaterialsAndGetUpdatedMaterialList: async (self) => {
-      self.getInSketchMaterials().then((materialData) => {
-        self.makeMissingMaterials(self, materialData).then(() => {
-          self.getInSketchMaterials().then((updatedMaterialData) => {
-            return updatedMaterialData;
-          });
-        });
-      });
+      async function asyncOperations(self) {
+        console.log("this", self);
+        let currentMaterialData = await self.getInSketchMaterials();
+        await self.makeMissingMaterials(self, currentMaterialData);
+        let updatedMaterialData = await self.getInSketchMaterials();
+
+        let currentLevelData = await self.getInSketchLevels();
+        await self.makeMissingLevels(self, currentLevelData);
+        let updatedLevelData = await self.getInSketchLevels();
+
+        self.createProgrammingBlocks(
+          self,
+          updatedMaterialData,
+          updatedLevelData
+        );
+      }
+      asyncOperations(this);
     },
     getInSketchMaterials: async () => {
       //functions interacting with FormIt need to take place asynchronously
@@ -168,6 +187,7 @@ export default {
       return materialData;
     },
     makeMissingMaterials: async (self, materialData) => {
+      let addedMaterials = [];
       for (let colorKey of self.getColorKey) {
         let colorName = colorKey.Department;
         let colorHex = colorKey.HexColor;
@@ -187,12 +207,172 @@ export default {
           );
           newFormItMaterial.MaterialName = colorName;
           console.log("new formit material", newFormItMaterial);
-          await FormIt.MaterialProvider.CreateMaterial(
+          let newMaterial = await FormIt.MaterialProvider.CreateMaterial(
             FormIt.LibraryType.SKETCH,
             newFormItMaterial
           );
+          addedMaterials.push(newMaterial);
         }
       }
+      return addedMaterials;
+    },
+    addMissingLevelsAndGetUpdatedLevelList: async (self) => {
+      console.log("adding missing levels", self);
+      return "some data";
+    },
+    getInSketchLevels: async () => {
+      let mainHistID = await FormIt.Model.GetHistoryID();
+      let currentLevelData = await FormIt.Levels.GetLevelsData(
+        mainHistID,
+        true
+      );
+      console.log("current level data", currentLevelData);
+      return currentLevelData;
+    },
+    makeMissingLevels: async (self, inSketchLevels) => {
+      console.log("making missing levels", self, inSketchLevels);
+      let existingLevelNames = [];
+      for (let lvl of inSketchLevels) {
+        existingLevelNames.push(lvl.Name);
+      }
+      console.log("existing level names", existingLevelNames);
+      for (let lvl of self.getActiveLevelsByElevation) {
+        if (!existingLevelNames.includes(lvl.name)) {
+          let mainHistID = await FormIt.Model.GetHistoryID();
+          let newLevelList = await FormIt.Levels.AddLevels(
+            mainHistID,
+            1,
+            lvl.elevation,
+            12
+          );
+          console.log("new levels list", newLevelList);
+          let newLevelId = newLevelList.LevelIds[0];
+          await FormIt.Levels.ChangeLevelName(newLevelId, lvl.name);
+        }
+      }
+    },
+    createProgrammingBlocks: async (
+      self,
+      updatedMaterialData,
+      updatedLevelData
+    ) => {
+      console.log(
+        "creating programming blocks",
+        self,
+        updatedMaterialData,
+        updatedLevelData
+      );
+      let cursor = { x: 0, y: 0 };
+      let topLevelGroups = [];
+      for (let lk in self.structuredProgramData) {
+        let levelData = self.structuredProgramData[lk];
+        let tallestTypes = -15;
+        let levelGroups = [];
+
+        let levelId = undefined;
+          for (let lvl of updatedLevelData) {
+            if (
+              lvl.Name == levelData.name &&
+              lvl.Elevation == levelData.elevation
+            ) {
+              levelId = lvl.Id.Object;
+            }
+          }
+
+        for (let gk in levelData.groups) {
+          let groupData = levelData.groups[gk];
+          let typeReset = tallestTypes + 15;
+          let groupBlocks = [];
+          cursor.y = typeReset;
+          for (let tk in groupData) {
+            let typeData = groupData[tk];
+
+            for (let p of typeData) {
+              if (p.quantity > 0 && p.area > 0) {
+                // console.log('program identified and meets critera',p)
+                let dim = Math.sqrt(p.area);
+                let half = dim / 2;
+                cursor.x += half;
+                for (let i = 0; i < p.quantity; i++) {
+                  // console.log('inside of quantity loop')
+
+                  let pt1 = await WSM.Geom.Point3d(
+                    cursor.x - half,
+                    cursor.y,
+                    levelData.elevation
+                  );
+                  let pt2 = await WSM.Geom.Point3d(
+                    cursor.x + half,
+                    cursor.y + dim,
+                    levelData.nextElev
+                  );
+                  let blockCreateHid = await FormIt.Model.GetHistoryID();
+                  let programBlock = await WSM.APICreateBlock(
+                    blockCreateHid,
+                    pt1,
+                    pt2
+                  );
+                  let blockGroupCreateHid = await FormIt.Model.GetHistoryID();
+                  let programBlockGroup = await WSM.APICreateGroup(
+                    blockGroupCreateHid,
+                    [programBlock]
+                  );
+                  groupBlocks.push(programBlockGroup);
+                  cursor.y += dim;
+                }
+                cursor.x += half;
+              } else {
+                console.log("program failed to meet criteria", p);
+              }
+              if (cursor.y > tallestTypes) {
+                tallestTypes = cursor.y;
+              }
+              cursor.y = typeReset;
+            }
+          }
+          if (groupBlocks.length > 0) {
+            let groupGroupCreateHid = await FormIt.Model.GetHistoryID();
+            let groupGroup = await WSM.APICreateGroup(
+              groupGroupCreateHid,
+              groupBlocks
+            );
+            levelGroups.push(groupGroup);
+          }
+          cursor.x = 0;
+        }
+        if (levelGroups.length > 0) {
+          let levelGroupCreateHid = await FormIt.Model.GetHistoryID();
+          let levelGroup = await WSM.APICreateGroup(
+            levelGroupCreateHid,
+            levelGroups
+          );
+          if (levelId) {
+            let setLevelGroupPropertiesHid = await FormIt.Model.GetHistoryID()
+            await WSM.APISetObjectProperties(
+              setLevelGroupPropertiesHid,//history
+              levelGroup,//object id
+              levelData.name,//object name
+              true,//report area by level bool
+              [levelId]//default level ids
+            )
+          }
+          // if (levelId) {
+          //   console.log('setting object levels',levelGroupCreateHid,levelGroup,levelId)
+          //   let assignLevelsHid = await FormIt.Model.GetHistoryID()
+          //   let results = await WSM.APISetObjectsLevels(
+          //     assignLevelsHid,
+          //     [levelGroup],
+          //     [levelId]
+          //   );
+          //   console.log('result',results)
+          // }
+
+          topLevelGroups.push(levelGroup);
+        }
+        cursor.x = 0;
+        cursor.y = 0;
+      }
+      console.log(topLevelGroups);
     },
     hexToRgb(hex) {
       var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
